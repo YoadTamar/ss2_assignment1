@@ -5,97 +5,120 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * this is the sturct of the adaptive array
+ */
 typedef struct AdptArray_
 {
-	int ArrSize;
-	PElement* pElemArr;
-	DEL_FUNC delFunc;
-	COPY_FUNC copyFunc;
-	PRINT_FUNC printFunc;
-}AdptArray , *PAdptArray;
+	int size;
+	PElement *elements_arr;
+	DEL_FUNC del;
+	COPY_FUNC copy;
+	PRINT_FUNC print;
+} AdptArray, *PAdptArray;
 
-
-PAdptArray CreateAdptArray(COPY_FUNC copyFunc_, DEL_FUNC delFunc_, PRINT_FUNC printFunc_)
+/**
+ * this func create a new empty array
+*/
+PAdptArray CreateAdptArray(COPY_FUNC copy, DEL_FUNC del, PRINT_FUNC print)
 {
 	PAdptArray pArr = (PAdptArray)malloc(sizeof(AdptArray));
 	if (pArr == NULL)
 		return NULL;
-	pArr->ArrSize = 0;
-	pArr->pElemArr = NULL;
-	pArr->delFunc = delFunc_;
-	pArr->copyFunc = copyFunc_;
-	pArr->printFunc = printFunc_;
+	pArr->size = 0;
+	pArr->elements_arr = NULL;
+	pArr->del = del;
+	pArr->copy = copy;
+	pArr->print = print;
 	return pArr;
 }
 
-Result SetAdptArrayAt(PAdptArray pArr, int idx, PElement pNewElem)
-{	
-    if(pArr == NULL) return FAIL;
-	if( idx < 0) return FAIL;
-	if (pNewElem == NULL) return FAIL;
-
-	if(idx >= pArr->ArrSize) 
-	{
-		PElement* newpElemArr;
-		newpElemArr = (PElement*)calloc((idx + 1), sizeof(PElement)); 
-		if(newpElemArr == NULL) 
-		{
-			return FAIL;
-		}
-		memcpy(newpElemArr, pArr->pElemArr, (pArr->ArrSize) * sizeof(PElement)); 
-		free(pArr->pElemArr);
-		pArr->pElemArr = newpElemArr;
-		pArr->ArrSize = idx + 1;
-	}
-
-	if((pArr->pElemArr)[idx] != NULL)
-		pArr->delFunc((pArr->pElemArr)[idx]);
-		
-	(pArr->pElemArr)[idx] = pArr->copyFunc(pNewElem);
-	return SUCCESS;
-}
-
-
+/**
+ * this func free all the memory of the array and his all values
+*/
 void DeleteAdptArray(PAdptArray pArr)
 {
 	int i;
 	if (pArr == NULL)
 		return;
-	for(i = 0; i < pArr->ArrSize; ++i)
+	for (i = 0; i < pArr->size; ++i)
 	{
-		if((pArr->pElemArr)[i] != NULL)
-			pArr->delFunc((pArr->pElemArr)[i]);
+		if ((pArr->elements_arr)[i] != NULL)
+			pArr->del((pArr->elements_arr)[i]);
 	}
-	free(pArr->pElemArr);
+	free(pArr->elements_arr);
 	free(pArr);
 }
 
-PElement GetAdptArrayAt(PAdptArray pArr, int idx)
+/**
+ * this func get an index and an element and it add to the array 
+ * the new element to the given index
+*/
+Result SetAdptArrayAt(PAdptArray pArr, int index, PElement pNewElem)
 {
-	if(pArr == NULL) return FAIL;
-	if(pArr->ArrSize < idx || idx < 0) return FAIL;
-	if((pArr->pElemArr[idx]) == NULL) return FAIL;
+	if (pArr == NULL)
+		return FAIL;
+	if (index < 0)
+		return FAIL;
+	if (pNewElem == NULL)
+		return FAIL;
 
-	return pArr->copyFunc((pArr->pElemArr)[idx]);
+	if (index >= pArr->size)
+	{
+		PElement *newpElemArr;
+		newpElemArr = (PElement *)calloc((index + 1), sizeof(PElement));
+		if (newpElemArr == NULL) return FAIL;
+		memcpy(newpElemArr, pArr->elements_arr, (pArr->size) * sizeof(PElement));
+		free(pArr->elements_arr);
+		pArr->elements_arr = newpElemArr;
+		pArr->size = index + 1;
+	}
+
+	if ((pArr->elements_arr)[index] != NULL)
+		pArr->del((pArr->elements_arr)[index]);
+
+	(pArr->elements_arr)[index] = pArr->copy(pNewElem);
+	return SUCCESS;
 }
 
+/**
+ * this func get an array and index and return the element in the given index	
+*/
+PElement GetAdptArrayAt(PAdptArray pArr, int index)
+{
+	if (pArr == NULL)
+		return FAIL;
+	if (pArr->size < index || index < 0)
+		return FAIL;
+	if ((pArr->elements_arr[index]) == NULL)
+		return FAIL;
+
+	return pArr->copy((pArr->elements_arr)[index]);
+}
+
+/**
+ * this func print all the elements in the array
+*/
 void PrintDB(PAdptArray pArr)
 {
-	if(pArr == NULL) return;
+	if (pArr == NULL)
+		return;
 	int i = 0;
-	for(i = 0; i<pArr->ArrSize; i++)
+	for (i = 0; i < pArr->size; i++)
 	{
-		if((pArr->pElemArr)[i] != NULL)
+		if ((pArr->elements_arr)[i] != NULL)
 		{
-			pArr->printFunc((pArr->pElemArr)[i]);
+			pArr->print((pArr->elements_arr)[i]);
 		}
 	}
 }
 
+/**
+ * this func return the size of the array
+*/
 int GetAdptArraySize(PAdptArray pArr)
 {
-	if(pArr == NULL)
+	if (pArr == NULL)
 		return FAIL;
-	return pArr->ArrSize;
+	return pArr->size;
 }
-
